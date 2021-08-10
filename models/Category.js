@@ -2,10 +2,18 @@ const mongoose = require('mongoose');
 
 const categorySchema = mongoose.Schema({
   name: { type: String, required: true },
-  image: { type: String, required: true },
-  countInStock: { type: Number, required: true },
+  icon: { type: String },
+  color: { type: String },
 });
 
-const Category = mongoose.model('Categorys', categorySchema);
+categorySchema.virtual('id').get(function () {
+  return this._id.toHexString();
+});
+
+categorySchema.set('toJSON', {
+  virtuals: true,
+});
+
+const Category = mongoose.model('Category', categorySchema);
 
 exports.Category = Category;
