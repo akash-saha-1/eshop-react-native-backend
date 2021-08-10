@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
         const isvalid = FILE_TYPE_MAP[file.mimetype];
         let uploadError = new Error('Invalid image type');
         if (isvalid) uploadError = null;
-        cb(uploadError, '/uploads');
+        cb(uploadError, './uploads');
     },
     filename: function(req, file, cb) {
         const fileName = file.originalname.split(' ').join('-').split('.')[0];
@@ -53,7 +53,7 @@ router.get('/:id', async(req, res) => {
     res.send(product);
 });
 
-router.post('/', uploadOptions.single('image'), async(req, res) => {
+router.post('/', upload.single('image'), async(req, res) => {
     const category = await Category.findById(req.body.category);
     if (!category) return res.status(404).send('Invalid category');
 
@@ -81,7 +81,7 @@ router.post('/', uploadOptions.single('image'), async(req, res) => {
     res.status(201).send(product);
 });
 
-router.put('/:id', uploadOptions.single('image'), async(req, res) => {
+router.put('/:id', upload.single('image'), async(req, res) => {
     if (!mongoose.isValidObjectId(req.params.id)) {
         return res.status(404).send('Invalid product id');
     }
@@ -156,10 +156,10 @@ router.get('/get/featured/:count', async(req, res) => {
     res.send(product);
 });
 
-//to upload multiple images for a proct in product gallery
+//to upload multiple images for a product in product gallery
 router.put(
     '/gallery-images/:id',
-    uploadOptions.array('images', 10), //10 is maximum no of files in asingle request
+    upload.array('images', 10), //10 is maximum no of files in asingle request
     async(req, res) => {
         if (!mongoose.isValidObjectId(req.params.id)) {
             return res.status(404).send('Invalid product id');
