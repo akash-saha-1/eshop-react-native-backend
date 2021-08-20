@@ -12,7 +12,6 @@ const usersRouter = require('./routers/users');
 const ordersRouter = require('./routers/orders');
 
 const api = process.env.API_URL;
-const port = process.env.PORT_NUMBER;
 const dbUserName = process.env.DB_USERNAME;
 const dbPassword = process.env.DB_PASSWORD;
 const dbName = process.env.DB_NAME;
@@ -48,10 +47,10 @@ mongoose
         `mongodb+srv://${dbUserName}:${dbPassword}@cluster0.efy2d.mongodb.net/${dbName}?retryWrites=true&w=majority`, { useNewUrlParser: true, useUnifiedTopology: true }
     )
     .then((res) => {
-        console.log('Server is started on Port ' + port);
+        console.log('Server is started on Port ' + (process.env.PORT_NUMBER || 700));
     })
     .catch((err) => {
         console.error(err);
     });
 
-app.listen(port, () => {});
+app.listen(process.env.PORT_NUMBER || 700, () => {});
