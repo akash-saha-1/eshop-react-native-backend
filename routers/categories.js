@@ -3,7 +3,7 @@ const router = express.Router();
 const { Category } = require('./../models/Category');
 
 router.get('/', async (req, res) => {
-  const categoriesList = await Categories.find();
+  const categoriesList = await Category.find();
 
   if (!categoriesList) {
     res.status(500).json({ success: false });
