@@ -7,7 +7,7 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === 'ValidationError') res.status(400).json({ message: err });
 
   // for general errros
-  if(err) return res.status(500).json(err);
+  //if(err) return res.status(500).json(err);
 };
 
 module.exports = errorHandler;
