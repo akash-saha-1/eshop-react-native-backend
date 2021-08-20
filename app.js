@@ -17,8 +17,15 @@ const dbUserName = process.env.DB_USERNAME;
 const dbPassword = process.env.DB_PASSWORD;
 const dbName = process.env.DB_NAME;
 
-app.use(cors());
-app.options('*', cors());
+// app.use(cors());
+// app.options('*', cors());
+
+app.use(function(req, res, next) {
+    console.log(2);
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 //Middlewire
 app.use(express.json());
