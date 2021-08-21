@@ -3,20 +3,23 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('./../models/User');
+const verifyAdmin = require('./../helper/adminVerification');
 
 const jwtSecret = process.env.JWT_SECRET;
 const expirationTime = process.env.JWT_EXPIRATION;
 
 router.get('/', async (req, res) => {
-  const userList = await User.find().select('-passwordHash');
-
-  if (!userList) {
-    res.status(500).json({ success: false });
+  if (!verifyAdmin(req, res)) {
+    const userList = await User.find().select('-passwordHash');
+    if (!userList) {
+      return res.status(500).json({ success: false });
+    }
+    return res.send(userList);
   }
-  res.send(userList);
 });
 
 router.get('/:id', async (req, res) => {
+  console.log(req.headers);
   const user = await User.findById(req.params.id).select('-passwordHash');
   if (user) return res.status(200).send(user);
   res.status(500).json({
@@ -78,7 +81,7 @@ router.post('/login', async (req, res) => {
         expiresIn: expirationTime,
       }
     );
-    return res.status(200).json({ user: user.email, toke: token });
+    return res.status(200).json({ user: user.email, token: token });
   } else {
     return res.status(404).send('user not found.');
   }

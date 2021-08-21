@@ -20,7 +20,7 @@ const authToken = () => {
 };
 
 const isRevoked = async(req, payload, done) => {
-    if (!payload.isAdmin) done(null, true); //reject the user action if he is not an admin user
+    //if (!payload.isAdmin) done(null, true); //reject the user action if he is not an admin user
     done(); //successfully validated that he is an admin user
 };
 module.exports = authToken;

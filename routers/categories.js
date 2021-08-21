@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Category } = require('./../models/Category');
+const verifyAdmin = require('./../helper/adminVerification');
 
 router.get('/', async (req, res) => {
   const categoriesList = await Category.find();
@@ -20,15 +21,18 @@ router.get('/:id', async (req, res) => {
   });
 });
 
-router.post('/', async (req, res) => {
-  let category = new Category({
-    name: req.body.name,
-    icon: req.body.icon,
-    color: req.body.color,
-  });
-  category = await category.save();
-  if (!category) return res.status(500).send('The category can not be created');
-  res.send(category);
+router.post('/', async (req, res, next) => {
+  if (!verifyAdmin(req, res)) {
+    let category = new Category({
+      name: req.body.name,
+      icon: req.body.icon,
+      color: req.body.color,
+    });
+    category = await category.save();
+    if (!category)
+      return res.status(500).send('The category can not be created');
+    res.send(category);
+  }
 });
 
 router.put('/:id', async (req, res) => {
