@@ -19,7 +19,6 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-  console.log(req.headers);
   const user = await User.findById(req.params.id).select('-passwordHash');
   if (user) return res.status(200).send(user);
   res.status(500).json({
@@ -69,6 +68,7 @@ router.post('/login', async (req, res) => {
   if (!user) {
     return res.status(404).send('user not found');
   }
+  let expirationDays = expirationTime.match(/(\d+)/)[0];
 
   if (user && bcrypt.compareSync(req.body.password, user.passwordHash)) {
     const token = jwt.sign(
@@ -81,7 +81,7 @@ router.post('/login', async (req, res) => {
         expiresIn: expirationTime,
       }
     );
-    return res.status(200).json({ user: user.email, token: token });
+    return res.status(200).json({ user: user.email, token: token , expirationDays: expirationDays });
   } else {
     return res.status(404).send('user not found.');
   }
