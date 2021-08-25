@@ -81,27 +81,31 @@ router.post('/login', async (req, res) => {
         expiresIn: expirationTime,
       }
     );
-    return res.status(200).json({ user: user.email, token: token , expirationDays: expirationDays });
+    return res
+      .status(200)
+      .json({ user: user.email, token: token, expirationDays: expirationDays });
   } else {
     return res.status(404).send('user not found.');
   }
 });
 
 router.delete('/:id', (req, res) => {
-  User.findByIdAndRemove(req.params.id)
-    .then((user) => {
-      if (user)
-        return res
-          .status(200)
-          .json({ success: true, message: 'The user is deleted!' });
-      else
-        return res
-          .status(404)
-          .json({ success: false, message: 'user not found' });
-    })
-    .catch((err) => {
-      return res.status(400).json({ success: 'false', error: err });
-    });
+  if (!verifyAdmin(req, res)) {
+    User.findByIdAndRemove(req.params.id)
+      .then((user) => {
+        if (user)
+          return res
+            .status(200)
+            .json({ success: true, message: 'The user is deleted!' });
+        else
+          return res
+            .status(404)
+            .json({ success: false, message: 'user not found' });
+      })
+      .catch((err) => {
+        return res.status(400).json({ success: 'false', error: err });
+      });
+  }
 });
 
 router.get('/get/count', async (req, res) => {

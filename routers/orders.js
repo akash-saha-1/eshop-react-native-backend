@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Order } = require('./../models/Order');
 const { OrderItem } = require('./../models/OrderItem');
+const verifyAdmin = require('./../helper/adminVerification');
 
 router.get('/', async (req, res) => {
   const dateOrdered = 'dateOrdered';
@@ -35,7 +36,7 @@ router.post('/', async (req, res) => {
     req.body.orderItems.map(async (orderItem) => {
       let newOrderItem = new OrderItem({
         quantity: orderItem.quantity,
-        order: orderItem.order,
+        product: orderItem.product,
       });
       newOrderItem = await newOrderItem.save();
       return newOrderItem._id;
@@ -50,10 +51,10 @@ router.post('/', async (req, res) => {
   const totalPrices = await Promise.all(
     orderItemsIdsResolved.map(async (orderItemsId) => {
       const orderItem = await OrderItem.findById(orderItemsId).populate(
-        'order',
+        'product',
         'price'
       );
-      return orderItem.order.price * +orderItem.quantity;
+      return orderItem.product.price * +orderItem.quantity;
     })
   );
   const totalPrice = totalPrices.reduce((a, b) => +a + +b, 0);
@@ -69,6 +70,8 @@ router.post('/', async (req, res) => {
     status: req.body.status,
     totalPrice: totalPrice,
     user: req.body.user,
+    payment: req.body.payment,
+    status: req.body.status
   });
   order = await order.save();
 
@@ -77,50 +80,56 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  let order = await Order.findByIdAndUpdate(
-    req.params.id,
-    {
-      status: req.body.status,
-    },
-    {
-      new: true,
-    }
-  );
-  if (!order) return res.status(500).send('The order can not be updated');
-  res.status(200).send(order);
+  if (!verifyAdmin(req, res)) {
+    let order = await Order.findByIdAndUpdate(
+      req.params.id,
+      {
+        status: req.body.status,
+      },
+      {
+        new: true,
+      }
+    );
+    if (!order) return res.status(500).send('The order can not be updated');
+    res.status(200).send(order);
+  }
 });
 
 router.delete('/:id', (req, res) => {
-  Order.findByIdAndRemove(req.params.id)
-    .then(async (order) => {
-      if (order) {
-        await order.orderItems.map(async (orderItem) => {
-          await OrderItem.findByIdAndRemove(orderItem);
-        });
-        return res
-          .status(200)
-          .json({ success: true, message: 'the order is deleted!' });
-      } else {
-        return res
-          .status(404)
-          .json({ success: false, message: 'order not found!' });
-      }
-    })
-    .catch((err) => {
-      return res.status(500).json({ success: false, error: err });
-    });
+  if (!verifyAdmin(req, res)) {
+    Order.findByIdAndRemove(req.params.id)
+      .then(async (order) => {
+        if (order) {
+          await order.orderItems.map(async (orderItem) => {
+            await OrderItem.findByIdAndRemove(orderItem);
+          });
+          return res
+            .status(200)
+            .json({ success: true, message: 'the order is deleted!' });
+        } else {
+          return res
+            .status(404)
+            .json({ success: false, message: 'order not found!' });
+        }
+      })
+      .catch((err) => {
+        return res.status(500).json({ success: false, error: err });
+      });
+  }
 });
 
 //to display total sales
 router.get('/get/totalsales', async (req, res) => {
-  const totalSales = await Order.aggregate([
-    { $group: { _id: null, totalSales: { $sum: '$totalPrice' } } },
-  ]);
+  if (!verifyAdmin(req, res)) {
+    const totalSales = await Order.aggregate([
+      { $group: { _id: null, totalSales: { $sum: '$totalPrice' } } },
+    ]);
 
-  if (!totalSales)
-    return res.status(400).send('The total order sales can not be generated');
+    if (!totalSales)
+      return res.status(400).send('The total order sales can not be generated');
 
-  return res.send({ totalSales: totalSales.pop().totalSales });
+    return res.send({ totalSales: totalSales.pop().totalSales });
+  }
 });
 
 router.get('/get/count', async (req, res) => {

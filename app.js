@@ -22,7 +22,7 @@ app.options('*', cors());
 
 //Middlewire
 app.use(express.json());
-app.use(morgan('tiny'));
+app.use(morgan('combined'));
 app.use(authToken());
 app.use('/uploads', express.static(__dirname + '/uploads'));
 app.use(errorHandler);
@@ -37,14 +37,15 @@ app.use(`${api}/orders`, ordersRouter);
 mongoose.set('useFindAndModify', false);
 // mongoose connection
 mongoose
-    .connect(
-        `mongodb+srv://${dbUserName}:${dbPassword}@cluster0.efy2d.mongodb.net/${dbName}?retryWrites=true&w=majority`, { useNewUrlParser: true, useUnifiedTopology: true }
-    )
-    .then((res) => {
-        console.log('Server is started on Port ' + port);
-    })
-    .catch((err) => {
-        console.error(err);
-    });
+  .connect(
+    `mongodb+srv://${dbUserName}:${dbPassword}@cluster0.efy2d.mongodb.net/${dbName}?retryWrites=true&w=majority`,
+    { useNewUrlParser: true, useUnifiedTopology: true }
+  )
+  .then((res) => {
+    console.log('Server is started on Port ' + port);
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
 app.listen(port, () => {});

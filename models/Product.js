@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const productSchema = mongoose.Schema({
+  brand : { type: String, required: true },
   name: { type: String, required: true },
   description: { type: String, required: true },
   richDescription: { type: String, default: '' },
@@ -14,7 +15,7 @@ const productSchema = mongoose.Schema({
   },
   countInStock: { type: String, required: true, min: 0, max: 1000 },
   rating: { type: Number, default: 0 },
-  numreviews: { type: Number, default: 0 },
+  numReviews: { type: Number, default: 0 },
   isFeatured: { type: Boolean, default: false },
   dateCreated: { type: Date, default: Date.now },
 });

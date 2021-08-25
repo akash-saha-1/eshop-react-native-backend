@@ -37,6 +37,7 @@ const orderSchema = mongoose.Schema({
     default: 'Pending',
   },
   totalPrice: {
+    required: true,
     type: Number,
   },
   user: {
@@ -48,6 +49,10 @@ const orderSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  payment:{
+    type: String,
+    required: true,
+  }
 });
 
 orderSchema.virtual('id').get(function () {
