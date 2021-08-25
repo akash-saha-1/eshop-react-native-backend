@@ -1,18 +1,25 @@
 const express = require('express');
 const router = express.Router();
+var path = require('path');
+const fs = require('fs');
 const { Product } = require('./../models/Product');
 const mongoose = require('mongoose');
 const { Category } = require('./../models/Category');
 const multer = require('multer');
 const verifyAdmin = require('./../helper/adminVerification');
+const cloudinary = require('./../Service/cloudinary');
+
+// setting base directory
+var baseDir = path.dirname(require.main.filename);
+const cloudinaryFolder = process.env.CLOUDINARY_UPLOAD_FOLDER;
 
 const FILE_TYPE_MAP = {
   'image/png': 'png',
   'image/jpg': 'jpg',
-  'image/jpeg': 'jpeg',
+  'image/jpeg': 'jpg',
   'image/PNG': 'PNG',
   'image/JPG': 'JPG',
-  'image/JPEG': 'JPEG',
+  'image/JPEG': 'JPG',
 };
 
 //multer configuration
@@ -26,7 +33,8 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const fileName = file.originalname.split(' ').join('-').split('.')[0];
     const extention = FILE_TYPE_MAP[file.mimetype];
-    cb(null, `${fileName}-${Date.now()}.${extention}`);
+    //cb(null, `${fileName}-${Date.now()}.${extention}`);
+    cb(null, `${fileName}.${extention}`);
   },
 });
 const upload = multer({ storage: storage });
@@ -54,6 +62,22 @@ router.get('/:id', async (req, res) => {
   res.send(product);
 });
 
+const deleteAllFiles = (folderPath) => {
+  try {
+    fs.readdir(folderPath, (error, files) => {
+      if (error) console.error(error);
+
+      for (const file of files) {
+        fs.unlink(path.join(folderPath, file), (err) => {
+          if (err) throw console.error(err);
+        });
+      }
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 router.post('/', upload.single('image'), async (req, res) => {
   if (!verifyAdmin(req, res)) {
     const category = await Category.findById(req.body.category);
@@ -62,14 +86,44 @@ router.post('/', upload.single('image'), async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).send('No image found in the request');
 
-    const fileName = req.file.filename;
-    const basePath = `${req.protocol}://${req.get('host')}/uploads/`;
-    console.log(req.body);
+    if (!req.body.name || !req.body.brand) {
+      return res.status(400).send('Invalid request. Must have all parameters');
+    }
+
+    const fileName = req.file.originalname;
+    const folderPath = path.join(baseDir, 'uploads');
+    const filePath = path.join(folderPath, fileName);
+    let randomNumber = Math.floor(Math.random() * 10) + 1;
+    const uploadingFileName =
+      req.body.name + '-' + req.body.brand + '-' + randomNumber;
+    let uploadedFileUrl = '';
+
+    // file upload to cloudinary
+    await cloudinary.uploader.upload(
+      filePath,
+      {
+        use_filename: false,
+        unique_filename: true,
+        folder: cloudinaryFolder,
+        public_id: uploadingFileName,
+      },
+      (err, result) => {
+        deleteAllFiles(folderPath);
+
+        if (err || !result) {
+          console.error('can not upload file due to : ' + err.message);
+          return res.status(500).send('the product image can be uploaded');
+        }
+        //console.log(result);
+        uploadedFileUrl = result.url;
+      }
+    );
+
     const newProduct = new Product({
       name: req.body.name,
       description: req.body.description,
       richDescription: req.body.richDescription,
-      image: `${basePath}${fileName}`,
+      image: uploadedFileUrl,
       brand: req.body.brand,
       price: req.body.price,
       category: req.body.category,
@@ -78,10 +132,13 @@ router.post('/', upload.single('image'), async (req, res) => {
       isFeatured: req.body.isFeatured,
       countInStock: req.body.countInStock,
     });
-    const product = await newProduct.save();
-    if (!product) return res.status(500).send('the product can not be created');
 
-    res.status(201).send(product);
+    try {
+      const product = await newProduct.save();
+      return res.status(201).send(product);
+    } catch (err) {
+      return res.status(500).send('the product can not be created');
+    }
   }
 });
 

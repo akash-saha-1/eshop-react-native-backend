@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('./../models/User');
 const verifyAdmin = require('./../helper/adminVerification');
+const sendEmail = require('./../Service/sendMail');
 
 const jwtSecret = process.env.JWT_SECRET;
 const expirationTime = process.env.JWT_EXPIRATION;
@@ -46,9 +47,10 @@ router.post('/', async (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
+  let email = req.body.email;
   let user = new User({
     name: req.body.name,
-    email: req.body.email,
+    email: email,
     passwordHash: bcrypt.hashSync(req.body.password, 10),
     phone: req.body.phone,
     isAdmin: req.body.isAdmin,
@@ -58,8 +60,24 @@ router.post('/register', async (req, res) => {
     city: req.body.city,
     country: req.body.country,
   });
-  user = await user.save();
-  if (!user) return res.status(500).send('The user can not be created');
+
+  //save user to database
+  try {
+    user = await user.save();
+    if (!user) return res.status(500).send('The user can not be created');
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send('The user can not be created');
+  }
+  //send email to new user
+  try {
+    sendEmail(email);
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .send('Error Occured while mailing to email address : ' + email);
+  }
   res.send(user);
 });
 
