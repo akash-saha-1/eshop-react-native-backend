@@ -18,6 +18,7 @@ const sendEmail = (toAddress, subject, body) => {
   let mailTransporter = nodemailer.createTransport({
     service: mailService,
     host: mailHost,
+    secure: true,
     auth: {
       user: mailAddress,
       pass: mailPassword,
