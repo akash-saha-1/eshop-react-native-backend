@@ -99,7 +99,7 @@ router.post('/', async (req, res) => {
         user.email,
         'Order Placed Successfully in Easy Shop',
         `Hi ${user.name},\n You have successfully placed order in Easy Shop.
-         Total price of order is ₹ ${totalPrice}. You can view the order in your profile section.`
+        Total price of order is ₹ ${totalPrice}. You can view the order in your profile section.`
       );
     }
     res.send(order);
