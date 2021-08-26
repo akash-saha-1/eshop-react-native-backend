@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { User } = require('./../models/User');
 const { Order } = require('./../models/Order');
 const { OrderItem } = require('./../models/OrderItem');
 const verifyAdmin = require('./../helper/adminVerification');
+const sendEmail = require('./../Service/sendMail');
 
 router.get('/', async (req, res) => {
   const dateOrdered = 'dateOrdered';
@@ -71,12 +73,43 @@ router.post('/', async (req, res) => {
     totalPrice: totalPrice,
     user: req.body.user,
     payment: req.body.payment,
-    status: req.body.status
+    status: req.body.status,
   });
-  order = await order.save();
 
-  if (!order) return res.status(500).send('The order can not be created');
-  res.send(order);
+  try {
+    order = await order.save();
+    if (!order) return res.status(500).send('The order can not be created');
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send('The order can not be created');
+  }
+
+  //send mail to user
+  try {
+    const user = await User.findById(req.body.user).select('-passwordHash');
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'the user with the given id was not found.',
+      });
+    }
+
+    if (user) {
+      sendEmail(
+        user.email,
+        'Order Placed Successfully in Easy Shop',
+        `Hi ${user.name},\n You have successfully placed order in Easy Shop.
+         Total price of order is ₹ ${totalPrice}. You can view the order in your profile section.`
+      );
+    }
+    res.send(order);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong while send email to user',
+    });
+  }
 });
 
 router.put('/:id', async (req, res) => {

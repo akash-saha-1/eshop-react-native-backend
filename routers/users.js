@@ -71,7 +71,7 @@ router.post('/register', async (req, res) => {
   }
   //send email to new user
   try {
-    sendEmail(email);
+    sendEmail(email, '', '');
   } catch (err) {
     console.error(err);
     return res

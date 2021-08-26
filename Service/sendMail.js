@@ -1,10 +1,19 @@
 const nodemailer = require('nodemailer');
 
-const sendEmail = (toAddress) => {
+const sendEmail = (toAddress, subject, body) => {
   const mailService = process.env.MAIL_SERVICE;
   const mailHost = process.env.MAIL_HOST;
   const mailAddress = process.env.MAIL_ADDRESS;
   const mailPassword = process.env.MAIL_PASSWORD;
+
+  if (!subject || subject == '') {
+    subject = 'Successfull User Registration in Easy Shop Application';
+  }
+
+  if (!body || body == '') {
+    body =
+      'Congratulations! Your profile is successfully registered in Easy Shop Application. Please Login to place your order.';
+  }
 
   let mailTransporter = nodemailer.createTransport({
     service: mailService,
@@ -18,8 +27,8 @@ const sendEmail = (toAddress) => {
   let mailDetails = {
     from: mailAddress,
     to: toAddress,
-    subject: 'Successfull User Registration in E-Shop Application',
-    text: 'Congratulations! Your profile is successfully registered in E-Shop Application. Please Login to place your order.',
+    subject: subject,
+    text: body,
   };
 
   mailTransporter.sendMail(mailDetails, function (err, data) {
